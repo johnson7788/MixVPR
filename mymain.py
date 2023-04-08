@@ -228,8 +228,8 @@ if __name__ == '__main__':
         
     datamodule = ComesticDataModule(
         batch_size=120,
-        img_per_place=4,
-        min_img_per_place=4,
+        img_per_product=4,
+        min_img_per_product=1, # minimum number of images per place
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_place=True,
         image_size=(320, 320),

@@ -76,7 +76,7 @@ class GSVCitiesDataset(Dataset):
             tmp_df = tmp_df.sample(frac=1)  # shuffle the city dataframe
             
             df = pd.concat([df, tmp_df], ignore_index=True)
-
+        # ['place_id', 'year', 'month', 'northdeg', 'city_id', 'lat', 'lon','panoid'],
         # keep only places depicted by at least min_img_per_place images
         res = df[df.groupby('place_id')['place_id'].transform(
             'size') >= self.min_img_per_place]

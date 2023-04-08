@@ -1,5 +1,6 @@
 # https://github.com/amaralibey/gsv-cities
-
+import os
+import json
 import pandas as pd
 from pathlib import Path
 from PIL import Image
@@ -19,23 +20,23 @@ if not Path(BASE_PATH).exists():
     raise FileNotFoundError(
         'BASE_PATH is hardcoded, please adjust to point to gsv_cities')
 
-class GSVCitiesDataset(Dataset):
+class ComesticDataset(Dataset):
     def __init__(self,
-                 cities=['London', 'Boston'],
-                 img_per_place=4,
-                 min_img_per_place=4,
+                 brands=['倩碧', '纨素之肤'],
+                 img_per_product=4,
+                 min_img_per_product=4,
                  random_sample_from_each_place=True,
                  transform=default_transform,
                  base_path=BASE_PATH
                  ):
-        super(GSVCitiesDataset, self).__init__()
+        super(ComesticDataset, self).__init__()
         self.base_path = base_path
-        self.cities = cities
+        self.brands = brands
 
-        assert img_per_place <= min_img_per_place, \
-            f"img_per_place should be less than {min_img_per_place}"
-        self.img_per_place = img_per_place
-        self.min_img_per_place = min_img_per_place
+        # assert img_per_product <= min_img_per_product, \
+        #     f"img_per_product should be less than {min_img_per_product}"
+        self.img_per_product = img_per_product
+        self.min_img_per_product = min_img_per_product
         self.random_sample_from_each_place = random_sample_from_each_place
         self.transform = transform
         
@@ -55,31 +56,15 @@ class GSVCitiesDataset(Dataset):
             named Dataframes, containing a DataFrame
             for each city in self.cities
         '''
-        # read the first city dataframe
-        df = pd.read_csv(self.base_path+'Dataframes/'+f'{self.cities[0]}.csv')
-        df = df.sample(frac=1)  # shuffle the city dataframe
-        
-
-        # append other cities one by one
-        for i in range(1, len(self.cities)):
-            tmp_df = pd.read_csv(
-                self.base_path+'Dataframes/'+f'{self.cities[i]}.csv')
-
-            # Now we add a prefix to place_id, so that we
-            # don't confuse, say, place number 13 of NewYork
-            # with place number 13 of London ==> (0000013 and 0500013)
-            # We suppose that there is no city with more than
-            # 99999 images and there won't be more than 99 cities
-            # TODO: rename the dataset and hardcode these prefixes
-            prefix = i
-            tmp_df['place_id'] = tmp_df['place_id'] + (prefix * 10**5)
-            tmp_df = tmp_df.sample(frac=1)  # shuffle the city dataframe
-            
-            df = pd.concat([df, tmp_df], ignore_index=True)
-
-        # keep only places depicted by at least min_img_per_place images
+        train_file = os.path.join(self.base_path, 'train.json')
+        # 读取成dataframe
+        with open(train_file, 'r') as f:
+            json_data = json.load(f)
+        train_data = list(json_data.values())
+        df = pd.DataFrame(train_data)
+        # keep only places depicted by at least min_img_per_product images
         res = df[df.groupby('place_id')['place_id'].transform(
-            'size') >= self.min_img_per_place]
+            'size') >= self.min_img_per_product]
         return res.set_index('place_id')
     
     def __getitem__(self, index):
@@ -92,11 +77,11 @@ class GSVCitiesDataset(Dataset):
         # we can either sort and take the most recent k images
         # or randomly sample them
         if self.random_sample_from_each_place:
-            place = place.sample(n=self.img_per_place)
+            place = place.sample(n=self.img_per_product)
         else:  # always get the same most recent images
             place = place.sort_values(
                 by=['year', 'month', 'lat'], ascending=False)
-            place = place[: self.img_per_place]
+            place = place[: self.img_per_product]
             
         imgs = []
         for i, row in place.iterrows():
@@ -109,11 +94,11 @@ class GSVCitiesDataset(Dataset):
                 img = self.transform(img)
 
             imgs.append(img)
-        # img:[3,320,320] ->imgs: [K,3,320,320], place_id: eg: 19, torch.tensor(place_id).repeat(self.img_per_place):[19,19,19,19]
+        # img:[3,320,320] ->imgs: [K,3,320,320], place_id: eg: 19, torch.tensor(place_id).repeat(self.img_per_product):[19,19,19,19]
         # 注意: 对比于图像分类，这里的__getitem__返回的是一个place，而不是一个图像
-        # 它是一个Tesor of K images (K=self.img_per_place)
+        # 它是一个Tesor of K images (K=self.img_per_product)
         # 这个Tensor的shape是[K, channels, height, width]，这需要在Dataloader中考虑到， 这将yield一个batch of shape [BS, K, channels, height, width]
-        return torch.stack(imgs), torch.tensor(place_id).repeat(self.img_per_place)
+        return torch.stack(imgs), torch.tensor(place_id).repeat(self.img_per_product)
 
     def __len__(self):
         '''Denotes the total number of places (not images)'''

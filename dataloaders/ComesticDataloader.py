@@ -1,8 +1,9 @@
 import pytorch_lightning as pl
+import json
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms as T
 
-from dataloaders.GSVCitiesDataset import GSVCitiesDataset
+from dataloaders.ComesticDataset import ComesticDataset
 from . import CosDataset
 
 from prettytable import PrettyTable
@@ -13,43 +14,21 @@ IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],
 VIT_MEAN_STD = {'mean': [0.5, 0.5, 0.5], 
                 'std': [0.5, 0.5, 0.5]}
 
-TRAIN_CITIES = [
-    'Bangkok',
-    'BuenosAires',
-    'LosAngeles',
-    'MexicoCity',
-    'OSL',
-    'Rome',
-    'Barcelona',
-    'Chicago',
-    'Madrid',
-    'Miami',
-    'Phoenix',
-    'TRT',
-    'Boston',
-    'Lisbon',
-    'Medellin',
-    'Minneapolis',
-    'PRG',
-    'WashingtonDC',
-    'Brussels',
-    'London',
-    'Melbourne',
-    'Osaka',
-    'PRS',
-]
-
+# 读取/home/wac/johnson/johnson/MixVPR/datasets/cos_val/test.json中的品牌
+with open('datasets/cos_val/test.json', 'r') as f:
+    brands_data = json.load(f)
+BRANDS = list(brands_data.keys())
 
 class ComesticDataModule(pl.LightningDataModule):
     def __init__(self,
                  batch_size=32,
-                 img_per_place=4,
-                 min_img_per_place=4,
+                 img_per_product=4,
+                 min_img_per_product=4,
                  shuffle_all=False,
                  image_size=(480, 640),
                  num_workers=0,
                  show_data_stats=True,
-                 cities=TRAIN_CITIES,
+                 brands=BRANDS,
                  mean_std=IMAGENET_MEAN_STD,
                  batch_sampler=None,
                  random_sample_from_each_place=True,
@@ -57,14 +36,14 @@ class ComesticDataModule(pl.LightningDataModule):
                  ):
         super().__init__()
         self.batch_size = batch_size
-        self.img_per_place = img_per_place
-        self.min_img_per_place = min_img_per_place
+        self.img_per_product = img_per_product
+        self.min_img_per_product = min_img_per_product
         self.shuffle_all = shuffle_all
         self.image_size = image_size
         self.num_workers = num_workers
         self.batch_sampler = batch_sampler
         self.show_data_stats = show_data_stats
-        self.cities = cities
+        self.brands = brands
         self.mean_dataset = mean_std['mean']
         self.std_dataset = mean_std['std']
         self.random_sample_from_each_place = random_sample_from_each_place
@@ -116,10 +95,10 @@ class ComesticDataModule(pl.LightningDataModule):
                 self.print_stats()
 
     def reload(self):
-        self.train_dataset = GSVCitiesDataset(
-            cities=self.cities,
-            img_per_place=self.img_per_place,
-            min_img_per_place=self.min_img_per_place,
+        self.train_dataset = ComesticDataset(
+            brands=self.brands,
+            img_per_product=self.img_per_product,
+            min_img_per_product=self.min_img_per_product,
             random_sample_from_each_place=self.random_sample_from_each_place,
             transform=self.train_transform)
 
@@ -141,7 +120,7 @@ class ComesticDataModule(pl.LightningDataModule):
         table.align['Data'] = "l"
         table.align['Value'] = "l"
         table.header = False
-        table.add_row(["# of cities", f"{len(TRAIN_CITIES)}"])
+        table.add_row(["# of brands", f"{len(BRANDS)}"])
         table.add_row(["# of places", f'{self.train_dataset.__len__()}'])
         table.add_row(["# of images", f'{self.train_dataset.total_nb_images}'])
         print(table.get_string(title="Training Dataset"))
@@ -164,7 +143,7 @@ class ComesticDataModule(pl.LightningDataModule):
         table.align['Value'] = "l"
         table.header = False
         table.add_row(
-            ["Batch size (PxK)", f"{self.batch_size}x{self.img_per_place}"])
+            ["Batch size (PxK)", f"{self.batch_size}x{self.img_per_product}"])
         table.add_row(
             ["# of iterations", f"{self.train_dataset.__len__()//self.batch_size}"])
         table.add_row(["Image size", f"{self.image_size}"])
