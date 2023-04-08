@@ -109,11 +109,10 @@ class GSVCitiesDataset(Dataset):
                 img = self.transform(img)
 
             imgs.append(img)
-
-        # NOTE: contrary to image classification where __getitem__ returns only one image 
-        # in GSVCities, we return a place, which is a Tesor of K images (K=self.img_per_place)
-        # this will return a Tensor of shape [K, channels, height, width]. This needs to be taken into account 
-        # in the Dataloader (which will yield batches of shape [BS, K, channels, height, width])
+        # img:[3,320,320] ->imgs: [K,3,320,320], place_id: eg: 19, torch.tensor(place_id).repeat(self.img_per_place):[19,19,19,19]
+        # 注意: 对比于图像分类，这里的__getitem__返回的是一个place，而不是一个图像
+        # 它是一个Tesor of K images (K=self.img_per_place)
+        # 这个Tensor的shape是[K, channels, height, width]，这需要在Dataloader中考虑到， 这将yield一个batch of shape [BS, K, channels, height, width]
         return torch.stack(imgs), torch.tensor(place_id).repeat(self.img_per_place)
 
     def __len__(self):

@@ -78,8 +78,8 @@ class VPRModel(pl.LightningModule):
         
     # the forward pass of the lightning model
     def forward(self, x):
-        x = self.backbone(x)
-        x = self.aggregator(x)
+        x = self.backbone(x)   #[480,3,320,320] --> [480,1024,20,20]
+        x = self.aggregator(x) #[480,1024,20,20] --> [480,4096]
         return x
     
     # configure the optimizer 
@@ -146,17 +146,17 @@ class VPRModel(pl.LightningModule):
     
     # This is the training step that's executed at each iteration
     def training_step(self, batch, batch_idx):
+        # places: [BS, K, ch, h, w],[120,4,320,320], labels: [BS, K],[120,4], K 代表每个地点的图片数量
         places, labels = batch
-        
-        # Note that GSVCities yields places (each containing N images)
-        # which means the dataloader will return a batch containing BS places
+        # 注意GSVCities产生的是地点（每个地点包含N张图片），这意味着dataloader将返回一个包含BS个地点的batch
+
         BS, N, ch, h, w = places.shape
         
-        # reshape places and labels
+        # reshape places and labels， 使得places的shape为[BS*N, ch, h, w]，labels的shape为[BS*N]，[480,3,320,320]
         images = places.view(BS*N, ch, h, w)
-        labels = labels.view(-1)
+        labels = labels.view(-1)  # [480]
 
-        # Feed forward the batch to the model
+        # Feed forward the batch to the model, 这里调用了forward函数，descriptors: [BS*N, 4096],eg:[480,4096]
         descriptors = self(images) # Here we are calling the method forward that we defined above
         loss = self.loss_function(descriptors, labels) # Call the loss_function we defined above
         
@@ -177,20 +177,20 @@ class VPRModel(pl.LightningModule):
         return descriptors.detach().cpu()
     
     def validation_epoch_end(self, val_step_outputs):
-        """this return descriptors in their order
-        depending on how the validation dataset is implemented 
+        """这将返回按顺序返回验证集的描述符
+        depending on how the validation dataset is implemented
         for this project (MSLS val, Pittburg val), it is always references then queries
         [R1, R2, ..., Rn, Q1, Q2, ...]
         """
         dm = self.trainer.datamodule
-        # The following line is a hack: if we have only one validation set, then
-        # we need to put the outputs in a list (Pytorch Lightning does not do it presently)
+        # 下面的代码是一个hack：如果我们只有一个验证集，
+        # 那么我们需要将输出放在列表中（Pytorch Lightning目前不这样做）
         if len(dm.val_datasets)==1: # we need to put the outputs in a list
             val_step_outputs = [val_step_outputs]
         
         for i, (val_set_name, val_dataset) in enumerate(zip(dm.val_set_names, dm.val_datasets)):
+            # feats:[120,4096]
             feats = torch.concat(val_step_outputs[i], dim=0)
-            
             if 'pitts' in val_set_name:
                 # split to ref and queries
                 num_references = val_dataset.dbStruct.numDb
@@ -198,14 +198,14 @@ class VPRModel(pl.LightningModule):
                 positives = val_dataset.getPositives()
             elif 'msls' in val_set_name:
                 # split to ref and queries
-                num_references = val_dataset.num_references
-                num_queries = len(val_dataset)-num_references
-                positives = val_dataset.pIdx
+                num_references = val_dataset.num_references  #18871,代表了参考图像的数量
+                num_queries = len(val_dataset)-num_references  #740，代表了查询图像的数量
+                positives = val_dataset.pIdx   #（740）
             else:
                 print(f'Please implement validation_epoch_end for {val_set_name}')
                 raise NotImplemented
 
-            r_list = feats[ : num_references]
+            r_list = feats[ : num_references]  #[120,4096],代表了参考图像的特征
             q_list = feats[num_references : ]
             pitts_dict = utils.get_validation_recalls(r_list=r_list, 
                                                 q_list=q_list,
@@ -310,6 +310,8 @@ if __name__ == '__main__':
         precision=16, # we use half precision to reduce  memory usage
         max_epochs=80,
         check_val_every_n_epoch=1, # run validation every epoch
+        val_check_interval=1, # 每10个batch进行一次验证
+        limit_val_batches=0.01, # we only run 10% of the validation set
         callbacks=[checkpoint_cb],# we only run the checkpointing callback (you can add more)
         reload_dataloaders_every_n_epochs=1, # we reload the dataset to shuffle the order
         log_every_n_steps=20,

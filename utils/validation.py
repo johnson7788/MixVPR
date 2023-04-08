@@ -5,8 +5,12 @@ from prettytable import PrettyTable
 
 
 def get_validation_recalls(r_list, q_list, k_values, gt, print_results=True, faiss_gpu=False, dataset_name='dataset without name ?'):
-        
-        embed_size = r_list.shape[1]
+        # k_values：[1, 5, 10, 20, 50, 100]，表示召回率的阈值
+        # gt：ground truth，即每个query对应的top100的reference的index
+        # r_list：reference的向量，参考图像的向量
+        # q_list：query的向量，即待检索的图像的向量
+        # dataset_name：数据集的名称， eg： msls_val
+        embed_size = r_list.shape[1]  #4096
         if faiss_gpu:
             res = faiss.StandardGpuResources()
             flat_config = faiss.GpuIndexFlatConfig()
@@ -17,7 +21,7 @@ def get_validation_recalls(r_list, q_list, k_values, gt, print_results=True, fai
         else:
             faiss_index = faiss.IndexFlatL2(embed_size)
         
-        # add references
+        # add references, 参考图像的向量加入索引
         faiss_index.add(r_list)
 
         # search for queries in the index
