@@ -13,7 +13,7 @@ default_transform = T.Compose([
 ])
 
 # NOTE: Hard coded path to dataset folder 
-BASE_PATH = '../datasets/gsv_cities/'
+BASE_PATH = 'datasets/gsv_cities/'
 
 if not Path(BASE_PATH).exists():
     raise FileNotFoundError(
@@ -144,4 +144,4 @@ class GSVCitiesDataset(Dataset):
         lat, lon = str(row['lat']), str(row['lon'])
         name = city+'_'+pl_id+'_'+year+'_'+month+'_' + \
             northdeg+'_'+lat+'_'+lon+'_'+panoid+'.jpg'
-        return name
+        return name #获取图片的具体的名称

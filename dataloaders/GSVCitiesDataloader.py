@@ -48,7 +48,7 @@ class GSVCitiesDataModule(pl.LightningDataModule):
                  min_img_per_place=4,
                  shuffle_all=False,
                  image_size=(480, 640),
-                 num_workers=4,
+                 num_workers=0,
                  show_data_stats=True,
                  cities=TRAIN_CITIES,
                  mean_std=IMAGENET_MEAN_STD,
