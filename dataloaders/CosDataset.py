@@ -28,6 +28,7 @@ class COS(Dataset):
         test_data = []
         for items in json_data.values():
             test_data.extend(items)
+        assert len(test_data) >0, f"测试集为空，数量为0"
         image_2_label = {}
         for item in test_data:
             image = item['image']
@@ -40,6 +41,7 @@ class COS(Dataset):
             brand_path = os.path.join(DATASET_ROOT, 'database', brand)
             for img in os.listdir(brand_path):
                 self.dbImages.append(os.path.join(brand_path, img))
+        assert len(self.dbImages) >0, f"参考集图像为空，数量为0"
         query_brands = os.listdir(os.path.join(DATASET_ROOT, 'query'))
         # hard coded query image names.
         self.qImages = []
@@ -47,12 +49,14 @@ class COS(Dataset):
             brand_path = os.path.join(DATASET_ROOT, 'query', brand)
             for img in os.listdir(brand_path):
                 self.qImages.append(os.path.join(brand_path, img))
+        assert len(self.qImages) >0, f"查询集图像为空，数量为0"
         # hard coded groundtruth (correspondence between each query and its matches)
         self.qlabels = []
         for one in self.qImages:
             image_name = one.split('/')[-1]
             label = image_2_label[image_name]
             self.qlabels.append(label)
+        assert len(self.qlabels) >0, f"查询集标签为空，数量为0"
         # concatenate reference images then query images so that we can use only one dataloader
         self.images = np.concatenate((self.dbImages, self.qImages))
         

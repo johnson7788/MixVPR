@@ -1,9 +1,9 @@
+import argparse
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from torch.optim import lr_scheduler, optimizer
 import utils
-
 from dataloaders.ComesticDataloader import ComesticDataModule
 from models import helper
 
@@ -216,9 +216,19 @@ class VPRModel(pl.LightningModule):
             self.log(f'{val_set_name}/R5', pitts_dict[5], prog_bar=False, logger=True)
             self.log(f'{val_set_name}/R10', pitts_dict[10], prog_bar=False, logger=True)
         print('\n\n')
+
+def parse_args():
+    """
+    返回arg变量和help
+    :return:
+    """
+    parser = argparse.ArgumentParser(description="MixVPR")
+    parser.add_argument('-n', '--num_workers', type=int, default=0, help='number of workers')
+    return parser.parse_args(), parser.print_help
             
             
 if __name__ == '__main__':
+    arg, helpmsg = parse_args()
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
     VAL_SET = 'cos_val'
     datamodule = ComesticDataModule(
@@ -228,7 +238,7 @@ if __name__ == '__main__':
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
         random_sample_from_each_product=True,
         image_size=(320, 320),
-        num_workers=0,
+        num_workers=arg.num_workers,
         show_data_stats=True,
         # val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
         val_set_names=[VAL_SET], # pitts30k_val, pitts30k_test, msls_val
