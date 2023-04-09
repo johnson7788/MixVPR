@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -17,20 +18,27 @@ if not path_obj.exists():
 if not path_obj.joinpath('train_val'):
     raise Exception(f'Please make sure the directory train_val from mapillary_sls dataset is situated in the directory {DATASET_ROOT}')
 
-class MSLS(Dataset):
+class COS(Dataset):
     def __init__(self, input_transform = None):
         
         self.input_transform = input_transform
-        
-        # hard coded reference image names, this avoids the hassle of listing them at each epoch.
-        self.dbImages = np.load(os.path.join(path_obj,'msls_val_dbImages.npy'))
-        
+        test_file = os.path.join(DATASET_ROOT, 'test.json')
+        with open(test_file, 'r') as f:
+            json_data = json.load(f)
+        brands = os.listdir(os.path.join(DATASET_ROOT, 'database'))
+        self.dbImages = []
+        for brand in brands:
+            brand_path = os.path.join(DATASET_ROOT, 'database', brand)
+            for img in brand_path:
+                self.dbImages.append(os.path.join(brand, img))
+        query_brands = os.listdir(os.path.join(DATASET_ROOT, 'query'))
         # hard coded query image names.
-        self.qImages = np.load(os.path.join(path_obj,'msls_val_qImages.npy'))
-        
-        # hard coded index of query images
-        self.qIdx = np.load(os.path.join(path_obj,'msls_val_qIdx.npy'))
-        
+        self.qImages = []
+        for brand in query_brands:
+            brand_path = os.path.join(DATASET_ROOT, 'query', brand)
+            for img in brand_path:
+                self.qImages.append(os.path.join(brand, img))
+        self.qIdx = [i for i in range(len(self.qImages))]
         # hard coded groundtruth (correspondence between each query and its matches)
         self.pIdx = np.load(os.path.join(path_obj,'msls_val_pIdx.npy'), allow_pickle=True)
         

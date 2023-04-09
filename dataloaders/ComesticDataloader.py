@@ -85,7 +85,7 @@ class ComesticDataModule(pl.LightningDataModule):
             self.val_datasets = []
             for valid_set_name in self.val_set_names:
                 if valid_set_name.lower() == 'cos_val':
-                    self.val_datasets.append(CosDataset.MSLS(
+                    self.val_datasets.append(CosDataset.COS(
                         input_transform=self.valid_transform))
                 else:
                     print(

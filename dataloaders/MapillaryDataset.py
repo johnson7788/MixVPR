@@ -22,22 +22,22 @@ class MSLS(Dataset):
         
         self.input_transform = input_transform
         
-        # hard coded reference image names, this avoids the hassle of listing them at each epoch.
+        # hard coded reference image names, this avoids the hassle of listing them at each epoch., 图片列表
         self.dbImages = np.load(os.path.join(path_obj,'msls_val_dbImages.npy'))
         
-        # hard coded query image names.
+        # hard coded query image names.， 图片列表
         self.qImages = np.load(os.path.join(path_obj,'msls_val_qImages.npy'))
         
-        # hard coded index of query images
+        # hard coded index of query images，
         self.qIdx = np.load(os.path.join(path_obj,'msls_val_qIdx.npy'))
         
-        # hard coded groundtruth (correspondence between each query and its matches)
+        # hard coded groundtruth (correspondence between each query and its matches)， groundtruth，每个query对应的匹配图片label
         self.pIdx = np.load(os.path.join(path_obj,'msls_val_pIdx.npy'), allow_pickle=True)
         
-        # concatenate reference images then query images so that we can use only one dataloader
+        # 拼接参考图像和查询图像，因此我们可以只用一个dataloader
         self.images = np.concatenate((self.dbImages, self.qImages[self.qIdx]))
         
-        # we need to keeo the number of references so that we can split references-queries 
+        # we need to keep the number of references so that we can split references-queries
         # when calculating recall@K
         self.num_references = len(self.dbImages)
     

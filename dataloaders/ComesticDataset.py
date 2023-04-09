@@ -60,12 +60,15 @@ class ComesticDataset(Dataset):
         # 读取成dataframe
         with open(train_file, 'r') as f:
             json_data = json.load(f)
-        train_data = list(json_data.values())
+        train_data = []
+        for value in json_data.values():
+            train_data.extend(value)
         df = pd.DataFrame(train_data)
         # keep only places depicted by at least min_img_per_product images
-        res = df[df.groupby('place_id')['place_id'].transform(
+        res = df[df.groupby('label')['label'].transform(
             'size') >= self.min_img_per_product]
-        return res.set_index('place_id')
+        res_df = res.set_index('label')
+        return res_df
     
     def __getitem__(self, index):
         place_id = self.places_ids[index]
