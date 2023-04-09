@@ -305,8 +305,8 @@ if __name__ == '__main__':
         precision=16, # we use half precision to reduce  memory usage
         max_epochs=80,
         check_val_every_n_epoch=1, # run validation every epoch
-        val_check_interval=1, # 每10个batch进行一次验证
-        limit_val_batches=0.01, # we only run 10% of the validation set
+        # val_check_interval=1, # 每10个batch进行一次验证
+        # limit_val_batches=0.01, # we only run 10% of the validation set
         callbacks=[checkpoint_cb],# we only run the checkpointing callback (you can add more)
         reload_dataloaders_every_n_epochs=1, # we reload the dataset to shuffle the order
         log_every_n_steps=20,
