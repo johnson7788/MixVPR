@@ -25,7 +25,7 @@ class ComesticDataset(Dataset):
                  brands=['倩碧', '纨素之肤'],
                  img_per_product=4,
                  min_img_per_product=4,
-                 random_sample_from_each_place=True,
+                 random_sample_from_each_product=True,
                  transform=default_transform,
                  base_path=BASE_PATH
                  ):
@@ -37,7 +37,7 @@ class ComesticDataset(Dataset):
         #     f"img_per_product should be less than {min_img_per_product}"
         self.img_per_product = img_per_product
         self.min_img_per_product = min_img_per_product
-        self.random_sample_from_each_place = random_sample_from_each_place
+        self.random_sample_from_each_product = random_sample_from_each_product
         self.transform = transform
         
         # generate the dataframe contraining images metadata
@@ -79,8 +79,8 @@ class ComesticDataset(Dataset):
         # sample K images (rows) from this place
         # we can either sort and take the most recent k images
         # or randomly sample them
-        if self.random_sample_from_each_place:
-            product = product.sample(n=self.img_per_product)
+        if self.random_sample_from_each_product:
+            product = product.sample(n=self.img_per_product,replace=True)
         else:  # always get the same most recent images
             product = product.sort_values(
                 by=['year', 'month', 'lat'], ascending=False)

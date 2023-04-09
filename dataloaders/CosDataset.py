@@ -39,14 +39,14 @@ class COS(Dataset):
         for brand in brands:
             brand_path = os.path.join(DATASET_ROOT, 'database', brand)
             for img in os.listdir(brand_path):
-                self.dbImages.append(os.path.join(brand, img))
+                self.dbImages.append(os.path.join(brand_path, img))
         query_brands = os.listdir(os.path.join(DATASET_ROOT, 'query'))
         # hard coded query image names.
         self.qImages = []
         for brand in query_brands:
             brand_path = os.path.join(DATASET_ROOT, 'query', brand)
             for img in os.listdir(brand_path):
-                self.qImages.append(os.path.join(brand, img))
+                self.qImages.append(os.path.join(brand_path, img))
         self.qIdx = [i for i in range(len(self.qImages))]
         # hard coded groundtruth (correspondence between each query and its matches)
         self.pIdx = []
@@ -62,7 +62,9 @@ class COS(Dataset):
         self.num_references = len(self.dbImages)
     
     def __getitem__(self, index):
-        img = Image.open(DATASET_ROOT+self.images[index])
+        img = Image.open(self.images[index])
+        # 变成3通道
+        img = img.convert("RGB")
 
         if self.input_transform:
             img = self.input_transform(img)

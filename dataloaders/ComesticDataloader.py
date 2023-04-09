@@ -31,7 +31,7 @@ class ComesticDataModule(pl.LightningDataModule):
                  brands=BRANDS,
                  mean_std=IMAGENET_MEAN_STD,
                  batch_sampler=None,
-                 random_sample_from_each_place=True,
+                 random_sample_from_each_product=True,
                  val_set_names=['cos_val']
                  ):
         super().__init__()
@@ -46,7 +46,7 @@ class ComesticDataModule(pl.LightningDataModule):
         self.brands = brands
         self.mean_dataset = mean_std['mean']
         self.std_dataset = mean_std['std']
-        self.random_sample_from_each_place = random_sample_from_each_place
+        self.random_sample_from_each_product = random_sample_from_each_product
         self.val_set_names = val_set_names
         self.save_hyperparameters() # save hyperparameter with Pytorch Lightening
 
@@ -99,7 +99,7 @@ class ComesticDataModule(pl.LightningDataModule):
             brands=self.brands,
             img_per_product=self.img_per_product,
             min_img_per_product=self.min_img_per_product,
-            random_sample_from_each_place=self.random_sample_from_each_place,
+            random_sample_from_each_product=self.random_sample_from_each_product,
             transform=self.train_transform)
 
     def train_dataloader(self):

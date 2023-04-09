@@ -147,13 +147,13 @@ class VPRModel(pl.LightningModule):
     # This is the training step that's executed at each iteration
     def training_step(self, batch, batch_idx):
         # places: [BS, K, ch, h, w],[120,4,320,320], labels: [BS, K],[120,4], K 代表每个地点的图片数量
-        places, labels = batch
+        products, labels = batch
         # 注意GSVCities产生的是地点（每个地点包含N张图片），这意味着dataloader将返回一个包含BS个地点的batch
 
-        BS, N, ch, h, w = places.shape
+        BS, N, ch, h, w = products.shape
         
         # reshape places and labels， 使得places的shape为[BS*N, ch, h, w]，labels的shape为[BS*N]，[480,3,320,320]
-        images = places.view(BS*N, ch, h, w)
+        images = products.view(BS*N, ch, h, w)
         labels = labels.view(-1)  # [480]
 
         # Feed forward the batch to the model, 这里调用了forward函数，descriptors: [BS*N, 4096],eg:[480,4096]
@@ -171,9 +171,9 @@ class VPRModel(pl.LightningModule):
     # For validation, we will also iterate step by step over the validation set
     # this is the way Pytorch Lghtning is made. All about modularity, folks.
     def validation_step(self, batch, batch_idx, dataloader_idx=None):
-        places, _ = batch
+        products, _ = batch
         # calculate descriptors
-        descriptors = self(places)
+        descriptors = self(products)
         return descriptors.detach().cpu()
     
     def validation_epoch_end(self, val_step_outputs):
@@ -193,7 +193,7 @@ class VPRModel(pl.LightningModule):
             feats = torch.concat(val_step_outputs[i], dim=0)
             if 'cos_val' in val_set_name:
                 # split to ref and queries
-                num_references = val_dataset.num_references  #18871,代表了参考图像的数量
+                num_references = val_dataset.num_references  #11765,代表了参考图像的数量
                 num_queries = len(val_dataset)-num_references  #740，代表了查询图像的数量
                 positives = val_dataset.pIdx   #（740）
             else:
@@ -226,7 +226,7 @@ if __name__ == '__main__':
         img_per_product=4,
         min_img_per_product=1, # minimum number of images per place
         shuffle_all=False, # shuffle all images or keep shuffling in-city only
-        random_sample_from_each_place=True,
+        random_sample_from_each_product=True,
         image_size=(320, 320),
         num_workers=0,
         show_data_stats=True,
