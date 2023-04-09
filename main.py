@@ -205,7 +205,7 @@ class VPRModel(pl.LightningModule):
                 print(f'Please implement validation_epoch_end for {val_set_name}')
                 raise NotImplemented
 
-            r_list = feats[ : num_references]  #[120,4096],代表了参考图像的特征
+            r_list = feats[ : num_references]  #[120,xxxx],代表了参考图像的特征
             q_list = feats[num_references : ]
             assert q_list.shape[0] == num_queries, f"注意查询图像向量不对，请检查是否pytorch_lightning设置了val_check_interval参数，或limit_val_batches"
             pitts_dict = utils.get_validation_recalls(r_list=r_list, 

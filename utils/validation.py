@@ -29,8 +29,8 @@ def get_validation_recalls(r_list, q_list, k_values, gt, print_results=True, fai
         
         
         
-        # start calculating recall_at_k
-        correct_at_k = np.zeros(len(k_values))
+        # start calculating recall_at_k， k_values: 一个整数列表，表示计算recall@k时使用的k值。
+        correct_at_k = np.zeros(len(k_values))  # [0, 0, 0, 0, 0, 0]清零
         for q_idx, pred in enumerate(predictions):
             for i, n in enumerate(k_values):
                 # if in top N then also in top NN, where NN > N

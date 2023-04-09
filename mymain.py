@@ -195,12 +195,12 @@ class VPRModel(pl.LightningModule):
                 # split to ref and queries
                 num_references = val_dataset.num_references  #11765,代表了参考图像的数量
                 num_queries = len(val_dataset)-num_references  #740，代表了查询图像的数量
-                positives = val_dataset.pIdx   #（740）
+                positives = val_dataset.qlabels   #（740）
             else:
                 print(f'Please implement validation_epoch_end for {val_set_name}')
                 raise NotImplemented
 
-            r_list = feats[ : num_references]  #[120,4096],代表了参考图像的特征
+            r_list = feats[ : num_references]  #[120,xxxx],代表了参考图像的特征
             q_list = feats[num_references : ]
             pitts_dict = utils.get_validation_recalls(r_list=r_list, 
                                                 q_list=q_list,
@@ -220,7 +220,7 @@ class VPRModel(pl.LightningModule):
             
 if __name__ == '__main__':
     pl.utilities.seed.seed_everything(seed=190223, workers=True)
-        
+    VAL_SET = 'cos_val'
     datamodule = ComesticDataModule(
         batch_size=120,
         img_per_product=4,
@@ -231,7 +231,7 @@ if __name__ == '__main__':
         num_workers=0,
         show_data_stats=True,
         # val_set_names=['pitts30k_val', 'pitts30k_test', 'msls_val'], # pitts30k_val, pitts30k_test, msls_val
-        val_set_names=['cos_val'], # pitts30k_val, pitts30k_test, msls_val
+        val_set_names=[VAL_SET], # pitts30k_val, pitts30k_test, msls_val
     )
     
     # examples of backbones
@@ -287,9 +287,9 @@ if __name__ == '__main__':
     # model params saving using Pytorch Lightning
     # we save the best 3 models accoring to Recall@1 on pittsburg val
     checkpoint_cb = ModelCheckpoint(
-        monitor='pitts30k_val/R1',
+        monitor=f'{VAL_SET}/R1',
         filename=f'{model.encoder_arch}' +
-        '_epoch({epoch:02d})_step({step:04d})_R1[{pitts30k_val/R1:.4f}]_R5[{pitts30k_val/R5:.4f}]',
+        '_epoch({epoch:02d})_step({step:04d})_R1[{cos_val/R1:.4f}]_R5[{cos_val/R5:.4f}]',
         auto_insert_metric_name=False,
         save_weights_only=True,
         save_top_k=3,

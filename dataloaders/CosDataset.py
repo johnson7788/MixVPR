@@ -49,11 +49,11 @@ class COS(Dataset):
                 self.qImages.append(os.path.join(brand_path, img))
         self.qIdx = [i for i in range(len(self.qImages))]
         # hard coded groundtruth (correspondence between each query and its matches)
-        self.pIdx = []
+        self.qlabels = []
         for one in self.qImages:
             image_name = one.split('/')[-1]
             label = image_2_label[image_name]
-            self.pIdx.append(label)
+            self.qlabels.append(label)
         # concatenate reference images then query images so that we can use only one dataloader
         self.images = np.concatenate((self.dbImages, self.qImages))
         
