@@ -47,7 +47,6 @@ class COS(Dataset):
             brand_path = os.path.join(DATASET_ROOT, 'query', brand)
             for img in os.listdir(brand_path):
                 self.qImages.append(os.path.join(brand_path, img))
-        self.qIdx = [i for i in range(len(self.qImages))]
         # hard coded groundtruth (correspondence between each query and its matches)
         self.qlabels = []
         for one in self.qImages:
