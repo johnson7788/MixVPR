@@ -25,25 +25,37 @@ class COS(Dataset):
         test_file = os.path.join(DATASET_ROOT, 'test.json')
         with open(test_file, 'r') as f:
             json_data = json.load(f)
+        test_data = []
+        for items in json_data.values():
+            test_data.extend(items)
+        image_2_label = {}
+        for item in test_data:
+            image = item['image']
+            image_name = image.split('/')[-1]
+            label = item['label']
+            image_2_label[image_name] = label
         brands = os.listdir(os.path.join(DATASET_ROOT, 'database'))
         self.dbImages = []
         for brand in brands:
             brand_path = os.path.join(DATASET_ROOT, 'database', brand)
-            for img in brand_path:
+            for img in os.listdir(brand_path):
                 self.dbImages.append(os.path.join(brand, img))
         query_brands = os.listdir(os.path.join(DATASET_ROOT, 'query'))
         # hard coded query image names.
         self.qImages = []
         for brand in query_brands:
             brand_path = os.path.join(DATASET_ROOT, 'query', brand)
-            for img in brand_path:
+            for img in os.listdir(brand_path):
                 self.qImages.append(os.path.join(brand, img))
         self.qIdx = [i for i in range(len(self.qImages))]
         # hard coded groundtruth (correspondence between each query and its matches)
-        self.pIdx = np.load(os.path.join(path_obj,'msls_val_pIdx.npy'), allow_pickle=True)
-        
+        self.pIdx = []
+        for one in self.qImages:
+            image_name = one.split('/')[-1]
+            label = image_2_label[image_name]
+            self.pIdx.append(label)
         # concatenate reference images then query images so that we can use only one dataloader
-        self.images = np.concatenate((self.dbImages, self.qImages[self.qIdx]))
+        self.images = np.concatenate((self.dbImages, self.qImages))
         
         # we need to keeo the number of references so that we can split references-queries 
         # when calculating recall@K

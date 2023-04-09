@@ -191,12 +191,7 @@ class VPRModel(pl.LightningModule):
         for i, (val_set_name, val_dataset) in enumerate(zip(dm.val_set_names, dm.val_datasets)):
             # feats:[120,4096]
             feats = torch.concat(val_step_outputs[i], dim=0)
-            if 'pitts' in val_set_name:
-                # split to ref and queries
-                num_references = val_dataset.dbStruct.numDb
-                num_queries = len(val_dataset)-num_references
-                positives = val_dataset.getPositives()
-            elif 'msls' in val_set_name:
+            if 'cos_val' in val_set_name:
                 # split to ref and queries
                 num_references = val_dataset.num_references  #18871,代表了参考图像的数量
                 num_queries = len(val_dataset)-num_references  #740，代表了查询图像的数量

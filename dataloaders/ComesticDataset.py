@@ -44,7 +44,7 @@ class ComesticDataset(Dataset):
         self.dataframe = self.__getdataframes()
         
         # get all unique place ids
-        self.places_ids = pd.unique(self.dataframe.index)
+        self.product_ids = pd.unique(self.dataframe.index)
         self.total_nb_images = len(self.dataframe)
         
     def __getdataframes(self):
@@ -71,41 +71,39 @@ class ComesticDataset(Dataset):
         return res_df
     
     def __getitem__(self, index):
-        place_id = self.places_ids[index]
+        product_id = self.product_ids[index]
         
         # get the place in form of a dataframe (each row corresponds to one image)
-        place = self.dataframe.loc[place_id]
+        product = self.dataframe.loc[product_id]
         
         # sample K images (rows) from this place
         # we can either sort and take the most recent k images
         # or randomly sample them
         if self.random_sample_from_each_place:
-            place = place.sample(n=self.img_per_product)
+            product = product.sample(n=self.img_per_product)
         else:  # always get the same most recent images
-            place = place.sort_values(
+            product = product.sort_values(
                 by=['year', 'month', 'lat'], ascending=False)
-            place = place[: self.img_per_product]
+            product = product[: self.img_per_product]
             
         imgs = []
-        for i, row in place.iterrows():
-            img_name = self.get_img_name(row)
-            img_path = self.base_path + 'Images/' + \
-                row['city_id'] + '/' + img_name
+        for i, row in product.iterrows():
+            img_path = self.get_img_name(row)
             img = self.image_loader(img_path)
 
             if self.transform is not None:
                 img = self.transform(img)
 
             imgs.append(img)
-        # img:[3,320,320] ->imgs: [K,3,320,320], place_id: eg: 19, torch.tensor(place_id).repeat(self.img_per_product):[19,19,19,19]
+        # img:[3,320,320] ->imgs: [K,3,320,320], product_id: eg: 19, torch.tensor(product_id).repeat(self.img_per_product):[19,19,19,19]
         # 注意: 对比于图像分类，这里的__getitem__返回的是一个place，而不是一个图像
         # 它是一个Tesor of K images (K=self.img_per_product)
         # 这个Tensor的shape是[K, channels, height, width]，这需要在Dataloader中考虑到， 这将yield一个batch of shape [BS, K, channels, height, width]
-        return torch.stack(imgs), torch.tensor(place_id).repeat(self.img_per_product)
+        return torch.stack(imgs), torch.tensor(product_id).repeat(self.img_per_product)
 
     def __len__(self):
         '''Denotes the total number of places (not images)'''
-        return len(self.places_ids)
+        return len(self.product_ids)
 
     @staticmethod
     def image_loader(path):
@@ -116,19 +114,9 @@ class ComesticDataset(Dataset):
         # given a row from the dataframe
         # return the corresponding image name
 
-        city = row['city_id']
-        
-        # now remove the two digit we added to the id
-        # they are superficially added to make ids different
-        # for different cities
-        pl_id = row.name % 10**5  #row.name is the index of the row, not to be confused with image name
-        pl_id = str(pl_id).zfill(7)
-        
-        panoid = row['panoid']
-        year = str(row['year']).zfill(4)
-        month = str(row['month']).zfill(2)
-        northdeg = str(row['northdeg']).zfill(3)
-        lat, lon = str(row['lat']), str(row['lon'])
-        name = city+'_'+pl_id+'_'+year+'_'+month+'_' + \
-            northdeg+'_'+lat+'_'+lon+'_'+panoid+'.jpg'
-        return name #获取图片的具体的名称
+        brand = row['brand']
+        image = row['image']
+        image_name = os.path.basename(image)
+        full_name = os.path.join(BASE_PATH, 'Images', brand, image_name)
+        assert os.path.exists(full_name), f"Image {full_name} does not exist"
+        return full_name

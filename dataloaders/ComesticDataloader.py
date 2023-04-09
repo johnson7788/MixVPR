@@ -121,7 +121,7 @@ class ComesticDataModule(pl.LightningDataModule):
         table.align['Value'] = "l"
         table.header = False
         table.add_row(["# of brands", f"{len(BRANDS)}"])
-        table.add_row(["# of places", f'{self.train_dataset.__len__()}'])
+        table.add_row(["# of products", f'{self.train_dataset.__len__()}'])
         table.add_row(["# of images", f'{self.train_dataset.total_nb_images}'])
         print(table.get_string(title="Training Dataset"))
         print()
