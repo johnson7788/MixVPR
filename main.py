@@ -177,7 +177,7 @@ class VPRModel(pl.LightningModule):
         return descriptors.detach().cpu()
     
     def validation_epoch_end(self, val_step_outputs):
-        """这将返回按顺序返回验证集的描述符
+        """这将返回按顺序返回验证集的描述符， 注意如果validation_epoch_end，那么我们，val_check_interval不能设置
         depending on how the validation dataset is implemented
         for this project (MSLS val, Pittburg val), it is always references then queries
         [R1, R2, ..., Rn, Q1, Q2, ...]
@@ -207,6 +207,7 @@ class VPRModel(pl.LightningModule):
 
             r_list = feats[ : num_references]  #[120,4096],代表了参考图像的特征
             q_list = feats[num_references : ]
+            assert q_list.shape[0] == num_queries, f"注意查询图像向量不对，请检查是否pytorch_lightning设置了val_check_interval参数，或limit_val_batches"
             pitts_dict = utils.get_validation_recalls(r_list=r_list, 
                                                 q_list=q_list,
                                                 k_values=[1, 5, 10, 15, 20, 50, 100],
@@ -310,8 +311,8 @@ if __name__ == '__main__':
         precision=16, # we use half precision to reduce  memory usage
         max_epochs=80,
         check_val_every_n_epoch=1, # run validation every epoch
-        val_check_interval=1, # 每10个batch进行一次验证
-        limit_val_batches=0.01, # we only run 10% of the validation set
+        # val_check_interval=1, # 每10个batch进行一次验证
+        # limit_val_batches=0.01, # we only run 10% of the validation set
         callbacks=[checkpoint_cb],# we only run the checkpointing callback (you can add more)
         reload_dataloaders_every_n_epochs=1, # we reload the dataset to shuffle the order
         log_every_n_steps=20,
